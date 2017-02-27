@@ -78,13 +78,9 @@ else:
 
 wd = os.getcwd()
 output_folder = 'outputs'
-pwd_output_folder = '%s/%s' % (wd, output_folder)
+pwd_output_folder = os.path.abspath('outputs')
 
 ########################################################################################################################
-
-# get bin name list
-bin_folder_1_bins_files = '%s/%s/*.fa*' % (wd, input_bin_folder_1)
-bin_folder_2_bins_files = '%s/%s/*.fa*' % (wd, input_bin_folder_2)
 
 
 # check input files
@@ -92,7 +88,7 @@ folder_bins_dict = {}
 all_input_bins_list = []
 all_input_bins_number_list = []
 for bin_folder in input_bin_folder_list:
-    bins_files = '%s/%s/*.fa*' % (wd, bin_folder)
+    bins_files = '%s/*' % os.path.abspath(bin_folder)
     bin_folder_bins = [os.path.basename(file_name) for file_name in glob.glob(bins_files)]
     all_input_bins_list.append(bin_folder_bins)
     all_input_bins_number_list.append(len(bin_folder_bins))
@@ -130,18 +126,20 @@ else:
 
 
 # create folder to hold bins with renamed contig name
-combined_all_bins_file = '%s/%s/combined_all_bins.fasta' % (wd, output_folder)
+combined_all_bins_file = '%s/combined_all_bins.fasta' % pwd_output_folder
 separator = '__'
-for each_folder in input_bin_folder_list:
+for (counter, each_folder) in enumerate(input_bin_folder_list):
     sleep(1)
     print('Add folder/bin name to contig name for %s bins' % each_folder)
-    os.mkdir('%s/%s/%s_new' % (wd, output_folder, each_folder))
+    each_folder_name = os.path.basename(os.path.abspath(each_folder))
+    temp_folder = '%d_%s_new' % (counter, each_folder_name)
+    os.mkdir('%s/%s' % (pwd_output_folder,temp_folder))
     # add binning program and bin id to metabat_bin's contig name
     each_folder_bins = folder_bins_dict[each_folder]
     for each_bin in each_folder_bins:
         bin_file_name, bin_file_ext = os.path.splitext(each_bin)
-        each_bin_content = SeqIO.parse('%s/%s/%s' % (wd, each_folder, each_bin), 'fasta')
-        new = open('%s/%s/%s_new/%s_%s.fasta' % (wd, output_folder, each_folder, each_folder, bin_file_name), 'w')
+        each_bin_content = SeqIO.parse('%s/%s' % (os.abspath(each_folder), each_bin), 'fasta')
+        new = open('%s/%s/%s.fasta' % (pwd_output_folder, temp_folder, bin_file_name), 'w')
         for each_contig in each_bin_content:
             each_contig_new_id = '%s%s%s%s%s' % (each_folder, separator, bin_file_name, separator, each_contig.id)
             each_contig.id = each_contig_new_id
@@ -149,20 +147,20 @@ for each_folder in input_bin_folder_list:
             SeqIO.write(each_contig, new, 'fasta')
         new.close()
     # Combine all new bins
-    os.system('cat %s/%s/%s_new/*.fasta > %s/%s/combined_%s_bins.fa' % (wd, output_folder, each_folder, wd, output_folder, each_folder))
-    os.system('rm -r %s/%s/%s_new' % (wd, output_folder, each_folder))
+    os.system('cat %s/%s/*.fasta > %s/%d_combined_bins.fa' % (pwd_output_folder, temp_folder, pwd_output_folder, counter))
+    os.system('rm -r %s/%s' % (pwd_output_folder, temp_folder))
 
 # combine all modified bins together
 sleep(1)
 print('Combine all bins together')
 if len(input_bin_folder_list) == 2:
-    pwd_combined_folder_1_bins = '%s/%s/combined_%s_bins.fa' % (wd, output_folder, input_bin_folder_1)
-    pwd_combined_folder_2_bins = '%s/%s/combined_%s_bins.fa' % (wd, output_folder, input_bin_folder_2)
+    pwd_combined_folder_1_bins = '%s/%d_combined_bins.fa' % (pwd_output_folder, 1)
+    pwd_combined_folder_2_bins = '%s/%d_combined_bins.fa' % (pwd_output_folder, 2)
     os.system('cat %s %s > %s' % (pwd_combined_folder_1_bins, pwd_combined_folder_2_bins, combined_all_bins_file))
 if len(input_bin_folder_list) == 3:
-    pwd_combined_folder_1_bins = '%s/%s/combined_%s_bins.fa' % (wd, output_folder, input_bin_folder_1)
-    pwd_combined_folder_2_bins = '%s/%s/combined_%s_bins.fa' % (wd, output_folder, input_bin_folder_2)
-    pwd_combined_folder_3_bins = '%s/%s/combined_%s_bins.fa' % (wd, output_folder, input_bin_folder_3)
+    pwd_combined_folder_1_bins = '%s/%d_combined_bins.fa' % (pwd_output_folder, 1)
+    pwd_combined_folder_2_bins = '%s/%d_combined_bins.fa' % (pwd_output_folder, 2)
+    pwd_combined_folder_3_bins = '%s/%d_combined_bins.fa' % (pwd_output_folder, 3)
     os.system('cat %s %s %s > %s' % (pwd_combined_folder_1_bins, pwd_combined_folder_2_bins, pwd_combined_folder_3_bins, combined_all_bins_file))
 
 combined_all_bins = SeqIO.parse(combined_all_bins_file, 'fasta')
@@ -179,7 +177,7 @@ for each in combined_all_bins:
         contig_length_dict[contig_id] = length
     elif contig_id in contig_bin_dict:
         contig_bin_dict[contig_id].append('%s%s%s' % (folder_name, separator, bin_name))
-contig_assignments_file = '%s/%s/contig_assignments.txt' % (wd, output_folder)
+contig_assignments_file = '%s/contig_assignments.txt' % pwd_output_folder
 contig_assignments = open(contig_assignments_file, 'w')
 
 
@@ -190,8 +188,8 @@ for each in contig_bin_dict:
 contig_assignments.close()
 
 
-contig_assignments_file_sorted = '%s/%s/contig_assignments_sorted.txt' % (wd, output_folder)
-contig_assignments_file_sorted_one_line = '%s/%s/contig_assignments_sorted_one_line.txt' % (wd, output_folder)
+contig_assignments_file_sorted = '%s/contig_assignments_sorted.txt' % pwd_output_folder
+contig_assignments_file_sorted_one_line = '%s/contig_assignments_sorted_one_line.txt' % pwd_output_folder
 os.system('cat %s | sort > %s' % (contig_assignments_file, contig_assignments_file_sorted))
 
 
@@ -236,10 +234,10 @@ print('The number of refined bins: %s' % refined_bin_number)
 # Export refined bins and prepare input for GoogleVis
 sleep(1)
 print('Exporting refined bins and preparing input for GoogleVis sankey plot')
-separated_1 = '%s/%s/Refined_bins_sources_and_length.txt' % (wd, output_folder)
-separated_2 = '%s/%s/Refined_bins_contigs.txt' % (wd, output_folder)
-googlevis_input_file = '%s/%s/GoogleVis_Sankey_%sMbp.csv' % (wd, output_folder, bin_size_cutoff_MB)
-os.mkdir('%s/%s/Refined' % (wd, output_folder))
+separated_1 = '%s/Refined_bins_sources_and_length.txt' % pwd_output_folder
+separated_2 = '%s/Refined_bins_contigs.txt' % pwd_output_folder
+googlevis_input_file = '%s/GoogleVis_Sankey_%sMbp.csv' % (pwd_output_folder, bin_size_cutoff_MB)
+os.mkdir('%s/%s/Refined' % pwd_output_folder)
 refined_bins = open(contig_assignments_file_sorted_one_line)
 googlevis_input_handle = open(googlevis_input_file, 'w')
 separated_1_handle = open(separated_1, 'w')
@@ -271,9 +269,9 @@ for each_refined_bin in refined_bins:
         m += 1
 
     stdout.write('\rExtracting refined bin: %s.fasta' % each_refined_bin_name)
-    refined_bin_file = '%s/%s/Refined/%s.fasta' % (wd, output_folder, each_refined_bin_name)
+    refined_bin_file = '%s/Refined/%s.fasta' % (pwd_output_folder, each_refined_bin_name)
     refined_bin_handle = open(refined_bin_file, 'w')
-    input_contigs_file = '%s/%s/combined_%s_bins.fa' % (wd, output_folder, input_bin_folder_1)
+    input_contigs_file = '%s/%d_combined_bins.fa' % (pwd_output_folder, 1)
     input_contigs = SeqIO.parse(input_contigs_file, 'fasta')
     for each_input_contig in input_contigs:
         each_input_contig_id = each_input_contig.id.split(separator)[-1]
@@ -302,7 +300,7 @@ sleep(1)
 print('Deleting temporary files')
 os.system('rm %s' % contig_assignments_file)
 os.system('rm %s' % (combined_all_bins_file))
-os.system('rm %s/%s/*.fa' % (wd, output_folder))
+os.system('rm %s/*.fa' % pwd_output_folder)
 os.system('rm %s' % (contig_assignments_file_sorted))
 os.system('rm %s' % (googlevis_input_file))
 os.system('rm %s' % (contig_assignments_file_sorted_one_line))
