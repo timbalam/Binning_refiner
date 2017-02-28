@@ -12,7 +12,9 @@ def GoogleVis_Sankey_plotter(input_csv, output_html, height):
             pass
 
     df = robjects.DataFrame.from_csvfile(input_csv)
-    sankey_plot = robjects.r['gvisSankey'](df,
+    # keep rows where either bin is duplicated
+    i = robjects.r['duplicates'](df.rx("C1")).ro | r.objects.r['duplicates'](df.rx("C2"))
+    sankey_plot = robjects.r['gvisSankey'](df.rx(i, True),
                                            option = robjects.r['list'](
                                                sankey = "{node : {colorMode: 'unique', labelPadding: 10}, link:{colorMode: 'source'}}",
                                                height = height,
