@@ -54,21 +54,21 @@ GATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATCGATC
 GATCGATCGATCGATCGATC
 '''
             ]
-        bins_1_dir = 'bins1'
+        bins_1_dir = os.path.join(data_dir, 'bins1')
         bins_1_bins = [os.path.join(data_dir, bins_1_dir, fname)  for fname in ['bin1.fa', 'bin2.fa']]
         bins_1_cids = [[0, 1], [2, 3]]
         
-        bins_2_dir = 'bins2'
+        bins_2_dir = os.path.join(data_dir, 'bins2')
         bins_2_bins = [os.path.join(data_dir, bins_2_dir, fname) for fname in ['bin1.fa', 'bin2.fa', 'bin3.fa']]
         bins_2_cids = [[0], [1,2], [3]]
         
         output_dir = 'outputs'
         refined_bins_sources_file = 'Refined_bins_sources_and_length.txt'
-        refined_bins_sources_content = '''Refined_1	80bp	bins1__bin1	bins2__bin1
-Refined_2	80bp	bins1__bin1	bins2__bin2
-Refined_3	80bp	bins1__bin2	bins2__bin2
-Refined_4	80bp	bins1__bin2	bins2__bin3
-'''
+        refined_bins_sources_content = '''Refined_1	80bp	{bins1}__bin1	{bins2}__bin1
+Refined_2	80bp	{bins1}__bin1	{bins2}__bin2
+Refined_3	80bp	{bins1}__bin2	{bins2}__bin2
+Refined_4	80bp	{bins1}__bin2	{bins2}__bin3
+'''.format(bins1=bins_1_dir, bins2=bins_2_dir)
 
         refined_bins_contigs_file = 'Refined_bins_contigs.txt'
         refined_bins_contigs_content = '''Refined_1
@@ -82,8 +82,8 @@ seq4
 '''
         output_refined_dir = os.path.join(output_dir, "Refined")
         
-        os.mkdir(os.path.join(data_dir, bins_1_dir))
-        os.mkdir(os.path.join(data_dir, bins_2_dir))
+        os.mkdir(bins_1_dir)
+        os.mkdir(bins_2_dir)
         for (bin, cids) in zip(bins_1_bins+bins_2_bins, bins_1_cids+bins_2_cids):
             with open(bin, 'w') as fh:
                 fh.write("".join([contigs[i] for i in cids]))
